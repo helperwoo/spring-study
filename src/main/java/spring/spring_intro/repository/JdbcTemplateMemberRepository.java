@@ -3,6 +3,8 @@ package spring.spring_intro.repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import spring.spring_intro.domain.Member;
 
@@ -21,32 +23,30 @@ public class JdbcTemplateMemberRepository implements MemberRepository {
 
     @Override
     public Member save(Member member) {
-        Member member = new Member();
-        member.setName();
-        member.setId(++sequence);
-        store.put(member.getId(), member);
+        SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(jdbcTemplate);
+        jdbcInsert.withTableName("member").usingGeneratedKeyColumns("id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", member.getName());
+        Number key = jdbcInsert.executeAndReturnKey(new MapSqlParameterSource(parameters));
+        member.setId(key.longValue());
         return member;
     }
 
     @Override
     public Optional<Member> findById(Long id) {
-        List<Member> result = this.jdbcTemplate.query("select * from member wher id = ?", memberRowMapper());
-
+        List<Member> result = jdbcTemplate.query("select * from member where id = ?", memberRowMapper(), id);
         return result.stream().findAny();
     }
 
     @Override
-    public Optional<Member> findByName(String name) {
-        return Optional.empty();
-//        return store.values().stream()
-//                .filter(member ->  member.getName().equals(name))
-//                .findAny();
+    public List<Member> findAll() {
+        return jdbcTemplate.query("select * from member", memberRowMapper());
     }
 
     @Override
-    public List<Member> findAll() {
-//        return new ArrayList<>(store.values());
-        return new ArrayList<Member>();
+    public Optional<Member> findByName(String name) {
+        List<Member> result = jdbcTemplate.query("select * from member where name = ?", memberRowMapper(), name);
+        return result.stream().findAny();
     }
 
     public RowMapper<Member> memberRowMapper() {
