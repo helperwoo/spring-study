@@ -1,11 +1,13 @@
 package spring.spring_intro.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import spring.spring_intro.domain.Member;
 import spring.spring_intro.repository.MemberRepository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 public class MemberService {
     private final MemberRepository memberRepository;
 
